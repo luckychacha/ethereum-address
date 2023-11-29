@@ -10,22 +10,27 @@ impl TryFrom<&str> for EthereumAddress {
     type Error = anyhow::Error;
 
     fn try_from(private_key_hex: &str) -> anyhow::Result<Self> {
+        // Take the private key and remove the 0x prefix if it exists.
         let private_key_hex = if let Some(stripped_private_key_hex) = private_key_hex.strip_prefix("0x") {
             stripped_private_key_hex
         } else {
             private_key_hex
         };
 
+        // Check that the private key is 256 bits.
         if private_key_hex.len() != 64 {
             return Err(anyhow!("Invalid private key length"));
         }
 
+        // Convert the private key from hex to bytes.
         let secret_key_bytes = hex::decode(private_key_hex)
             .map_err(|e| anyhow!("Invalid hex: {}", e))?;
 
         let secret_key = SecretKey::parse_slice(&secret_key_bytes)
             .map_err(|e| anyhow!("Failed to parse secret key: {}", e))?;
 
+        // Generate the public key from the secret key.
+        // Libsecp256k1 uses Jacobian coordinates, which is a way can avoid of division.
         let public_key = PublicKey::from_secret_key(&secret_key);
 
         // It is worth noting that the public key is not formatted with the prefix (hex) 04 when the address is calculated.
@@ -48,29 +53,6 @@ impl EthereumAddress {
         hex::encode(self.0)
     }
 }
-
-
-// pub fn ethereum_address_from_hex(private_key_hex: &str) -> anyhow::Result<String> {
-//     let secret_key_bytes = hex::decode(private_key_hex)
-//         .context("Failed to decode hex string to bytes")?;
-//
-//     let secret_key = SecretKey::parse_slice(&secret_key_bytes)
-//         .context("Failed to parse secret key")?;
-//
-//     // From the secret key, we can generate the public key:
-//     let public_key = PublicKey::from_secret_key(&secret_key);
-//
-//     let public_key_bytes = public_key.serialize();
-//
-//     // It is worth noting that the public key is not formatted with the prefix (hex) 04 when the address is calculated.
-//     let hash = Keccak256::digest(&public_key_bytes[1..]);
-//
-//     // Then we keep only the last 20 bytes (least significant bytes), which is our Ethereum address:
-//     let address = hex::encode(&hash[12..]);
-//
-//     Ok(address)
-// }
-
 #[cfg(test)]
 mod tests {
     use super::*;
