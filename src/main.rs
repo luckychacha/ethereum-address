@@ -12,4 +12,3 @@ fn main() {
         Err(e) => println!("Failed to generate Ethereum address: {}", e),
     }
 }
-

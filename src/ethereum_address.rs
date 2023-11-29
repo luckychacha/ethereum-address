@@ -1,4 +1,3 @@
-
 use anyhow::anyhow;
 use libsecp256k1::{PublicKey, SecretKey};
 use sha3::{Digest, Keccak256};
@@ -11,11 +10,12 @@ impl TryFrom<&str> for EthereumAddress {
 
     fn try_from(private_key_hex: &str) -> anyhow::Result<Self> {
         // Take the private key and remove the 0x prefix if it exists.
-        let private_key_hex = if let Some(stripped_private_key_hex) = private_key_hex.strip_prefix("0x") {
-            stripped_private_key_hex
-        } else {
-            private_key_hex
-        };
+        let private_key_hex =
+            if let Some(stripped_private_key_hex) = private_key_hex.strip_prefix("0x") {
+                stripped_private_key_hex
+            } else {
+                private_key_hex
+            };
 
         // Check that the private key is 256 bits.
         if private_key_hex.len() != 64 {
@@ -23,8 +23,8 @@ impl TryFrom<&str> for EthereumAddress {
         }
 
         // Convert the private key from hex to bytes.
-        let secret_key_bytes = hex::decode(private_key_hex)
-            .map_err(|e| anyhow!("Invalid hex: {}", e))?;
+        let secret_key_bytes =
+            hex::decode(private_key_hex).map_err(|e| anyhow!("Invalid hex: {}", e))?;
 
         let secret_key = SecretKey::parse_slice(&secret_key_bytes)
             .map_err(|e| anyhow!("Failed to parse secret key: {}", e))?;
@@ -61,14 +61,20 @@ mod tests {
     fn test_ethereum_address_from_hex() {
         let private_key_hex = "f8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f315";
         let address = EthereumAddress::new(private_key_hex).unwrap();
-        assert_eq!(address.hex_encode_address(), "001d3f1ef827552ae1114027bd3ecf1f086ba0f9");
+        assert_eq!(
+            address.hex_encode_address(),
+            "001d3f1ef827552ae1114027bd3ecf1f086ba0f9"
+        );
     }
 
     #[test]
     fn test_ethereum_address_from_hex_with_prefix() {
         let private_key_hex = "0xf8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f315";
         let address = EthereumAddress::new(private_key_hex).unwrap();
-        assert_eq!(address.hex_encode_address(), "001d3f1ef827552ae1114027bd3ecf1f086ba0f9");
+        assert_eq!(
+            address.hex_encode_address(),
+            "001d3f1ef827552ae1114027bd3ecf1f086ba0f9"
+        );
     }
 
     #[test]
