@@ -1,14 +1,15 @@
 use anyhow::anyhow;
 use libsecp256k1::{PublicKey, SecretKey};
 use sha3::{Digest, Keccak256};
+use std::str::FromStr;
 
 #[derive(Debug, PartialEq)]
 pub struct EthereumAddress([u8; 20]);
 
-impl TryFrom<&str> for EthereumAddress {
-    type Error = anyhow::Error;
+impl FromStr for EthereumAddress {
+    type Err = anyhow::Error;
 
-    fn try_from(private_key_hex: &str) -> anyhow::Result<Self> {
+    fn from_str(private_key_hex: &str) -> anyhow::Result<Self> {
         // Take the private key and remove the 0x prefix if it exists.
         let private_key_hex =
             if let Some(stripped_private_key_hex) = private_key_hex.strip_prefix("0x") {
@@ -45,14 +46,11 @@ impl TryFrom<&str> for EthereumAddress {
 }
 
 impl EthereumAddress {
-    pub fn new(private_key_hex: &str) -> anyhow::Result<Self> {
-        private_key_hex.try_into()
-    }
-
     pub fn hex_encode_address(&self) -> String {
         hex::encode(self.0)
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,7 +58,7 @@ mod tests {
     #[test]
     fn test_ethereum_address_from_hex() {
         let private_key_hex = "f8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f315";
-        let address = EthereumAddress::new(private_key_hex).unwrap();
+        let address: EthereumAddress = private_key_hex.parse().unwrap();
         assert_eq!(
             address.hex_encode_address(),
             "001d3f1ef827552ae1114027bd3ecf1f086ba0f9"
@@ -70,7 +68,7 @@ mod tests {
     #[test]
     fn test_ethereum_address_from_hex_with_prefix() {
         let private_key_hex = "0xf8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f315";
-        let address = EthereumAddress::new(private_key_hex).unwrap();
+        let address: EthereumAddress = private_key_hex.parse().unwrap();
         assert_eq!(
             address.hex_encode_address(),
             "001d3f1ef827552ae1114027bd3ecf1f086ba0f9"
@@ -80,28 +78,28 @@ mod tests {
     #[test]
     fn test_invalid_ethereum_address_from_hex() {
         let private_key_hex = "f8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f31";
-        let address = EthereumAddress::new(private_key_hex);
+        let address: Result<EthereumAddress, anyhow::Error> = private_key_hex.parse();
         assert!(address.is_err());
     }
 
     #[test]
     fn test_invalid_ethereum_address_from_hex_with_prefix() {
         let private_key_hex = "0xf8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f31";
-        let address = EthereumAddress::new(private_key_hex);
+        let address: Result<EthereumAddress, anyhow::Error> = private_key_hex.parse();
         assert!(address.is_err());
     }
 
     #[test]
     fn test_invalid_ethereum_address_from_hex_with_prefix_and_suffix() {
         let private_key_hex = "0xf8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f31";
-        let address = EthereumAddress::new(private_key_hex);
+        let address: Result<EthereumAddress, anyhow::Error> = private_key_hex.parse();
         assert!(address.is_err());
     }
 
     #[test]
     fn test_invalid_ethereum_address_from_hex_with_suffix() {
         let private_key_hex = "f8f8a2f43c8376ccb0871305060d7b27b0554d2cc72bccf41b2705608452f31";
-        let address = EthereumAddress::new(private_key_hex);
+        let address: Result<EthereumAddress, anyhow::Error> = private_key_hex.parse();
         assert!(address.is_err());
     }
 }
