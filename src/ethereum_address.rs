@@ -24,10 +24,11 @@ impl FromStr for EthereumAddress {
         }
 
         // Convert the private key from hex to bytes.
-        let secret_key_bytes =
-            hex::decode(private_key_hex).map_err(|e| anyhow!("Invalid hex: {}", e))?;
+        let mut secret_key_bytes_slice = [0u8; 32];
+        hex::decode_to_slice(private_key_hex, &mut secret_key_bytes_slice)
+            .map_err(|e| anyhow!("Invalid hex: {}", e))?;
 
-        let secret_key = SecretKey::parse_slice(&secret_key_bytes)
+        let secret_key = SecretKey::parse(&secret_key_bytes_slice)
             .map_err(|e| anyhow!("Failed to parse secret key: {}", e))?;
 
         // Generate the public key from the secret key.
